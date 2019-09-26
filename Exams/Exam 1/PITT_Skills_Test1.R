@@ -37,14 +37,19 @@ dataset$Year_Collected <- factor(dataset$Year_Collected)
 
 ?plot()
 
-plot(x= dataset$Year_Collected,y=dataset$DNA_Concentration_Katy,main="Katys Extractions", ylab="DNA Concentration",) 
+plot(x= dataset$Year_Collected,y=dataset$DNA_Concentration_Katy,main="Katys Extractions",xlab="year", ylab="DNA Concentration",) 
   
     
 
 
 #BENNY
-plot(x= dataset$Year_Collected,y=dataset$DNA_Concentration_Ben,main="Bens Extractions", ylab="DNA Concentration")
+plot(x= dataset$Year_Collected,y=dataset$DNA_Concentration_Ben,main="Bens Extractions",xlab="year", ylab="DNA Concentration")
     
+
+
+
+
+
 
 #3.
 
