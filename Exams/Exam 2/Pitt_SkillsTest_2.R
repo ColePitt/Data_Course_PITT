@@ -89,7 +89,11 @@ mod2 = lm(Diversity ~ Aerosol_Density*Precip, data = dat2)
 
 summary(mod2)
 
+
+
+
 plot(dat2$Diversity ~ dat2$Aerosol_Density*dat2$Precip)
+
 
 
 abline(mod2, col="Blue")
@@ -141,10 +145,21 @@ ggplot(predictions, aes(x = Aerosol_Density, y = Diversity)) +
   geom_point(aes(y= Model_2), color = "Blue") +
   geom_point(aes(y= Model_3), color = "Green")
 
+jpeg("PITT_exam2_plotfor#5.jpeg")
+ggplot(predictions, aes(x = Aerosol_Density, y = Diversity)) +
+  geom_point() +
+  geom_point(aes(y= Model_1), color = "Red") +
+  geom_point(aes(y= Model_2), color = "Blue") +
+  geom_point(aes(y= Model_3), color = "Green")
+
+
+dev.off()
 
 
 #6.  Write code to show the predicted values of Diversity for each model using the hypothetical new data 
 #found in hyp_data.csv (10 points)
+
+
 
 dat = read.csv("../../../Data_Course/Exam_2/hyp_data.csv")
 datpred1 = add_predictions(dat, mod1, var = "Model_1")
@@ -157,6 +172,13 @@ ggplot(datprediction, aes(x = Aerosol_Density, y = Model_3)) +
   geom_point(aes(y= Model_1), color = "Red") +
   geom_point(aes(y= Model_2), color = "Green") 
 
+
+jpeg("PITT_exam2_plotfor#6.jpeg")
+ggplot(datprediction, aes(x = Aerosol_Density, y = Model_3)) +
+  geom_point() +
+  geom_point(aes(y= Model_1), color = "Red") +
+  geom_point(aes(y= Model_2), color = "Green")
+dev.off()
 
 #7.  Export a text file that contains the summary output from *both* your models to "model_summaries.txt" (10 points)
 #(Hint: use the sink() function)
@@ -181,7 +203,12 @@ ggplot() +
   geom_point(data=datprediction, aes(x = Aerosol_Density, y = Model_2), color='red') + 
   geom_point(data=datprediction, aes(x = Aerosol_Density, y = Model_1), color='blue') 
 
-
+jpeg("PITT_exam2_plotfor#Bonus8.jpeg")
+ggplot() +
+  geom_point(data=predictions, aes(x = Aerosol_Density, y = Diversity), color='black') + 
+  geom_point(data=datprediction, aes(x = Aerosol_Density, y = Model_2), color='red') + 
+  geom_point(data=datprediction, aes(x = Aerosol_Density, y = Model_1), color='blue') 
+dev.off()
 
 
 #*Bonus*
@@ -189,6 +216,9 @@ ggplot() +
 #test it on the remaining 50% of the data. Find some way to show how well it fits the data.
 #This is the only cross-validation part of the exam. (10 bonus points for proper code)
 
+library(caret)
+trainingsamples <- caret::createDataPartition(dat2$Diversity,.5)
+train = df[trainingsamples,]
 
 #Push the following to your github web page in your new Exam_2 directory:
 #  1.  Your complete R script for ALL the above tasks, saved as LASTNAME_Skills_Test_2.R
