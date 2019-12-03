@@ -1,0 +1,206 @@
+---
+title: "Exam_3"
+author: "Cole Pitt"
+date: "11/27/2019"
+output: html_document
+---
+
+Lets load the data and take a look at it!
+
+```{r, ECHO= FALSE, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(plotly)
+library(tidyr)
+library(modelr)
+```
+
+``` {r, ECHO= FALSE , eval= TRUE}
+data <- read.csv(file = "BioLogData_Exam3.csv")
+data <- read.csv(file = "BioLogData_Exam3.csv", sep= "|")
+
+summary(data)
+```
+
+Now, Let us **"Run Wild With It!"**
+
+It looks like i will need to use the following tools to answer questions about the data: 
++ summary statistics and visualizations of variables
++ visualizations of relationships between variables
++ modeling
++ statistical tests 
++ transformations, if needed
+
+#### These data are from a "BioLog" machine. Essentially, you put diluted environmental samples into a plate that has a bunch of wells. In each well, there is a unique carbon substrate tagged to a dye. If the microbes in your environmental sample are capable of using that type of carbon substrate, the well will begin to change color. 
+
+Courtesy of Dr. Zahn, here is the breakdown of the columns in the data set. 
+
+| Column ID  |  Description                                                                              |
+|------------|-------------------------------------------------------------------------------------------|
+|  **Sample.ID** |  The location the sample was taken from. There are 2 water samples and 2 soil samples.    |
+| **Rep**        |  The experimental replicate. 3 replicates for each combination of experimental variables. |
+| **Well**       | The well number on the BioLog plate.                                                      |
+| **Dilution**   | The dilution factor of the sample.                                                        |
+| **Substrate**  | The name of the carbon source in that well.  "Water" is the negative control.                                             |
+| **Hr_24**      | The light absorbance value after 24 hours of incubation.                                  |
+| **Hr_48**      | The light absorbance value after 48 hours of incubation.                                  |
+| **Hr_144**     | The light absorbance value after 144 hours of incubation.                                 |
+
+Lets look at some plots, run some tests and look at different models. This can help us understand the data more clearly. 
+
+```{r ECHO= FALSE, include=FALSE}
+names(data)
+names(data)[1] <- "ID"
+names(data)[6] <- "Hr24"
+names(data)[7] <- "Hr48"
+names(data)[8] <- "Hr144"
+
+hist(data$Dilution)
+hist(data$Hr144)
+hist(data$Hr48)
+hist(data$Hr24)
+
+
+unique(data$Dilution)
+unique(data$Hr24)
+```
+
+## Lets see how much time affects Dilution with some plots.
+
+```{r}
+
+ggplot(data,aes(x=data$Hr24,fill= ID)) +
+  geom_histogram(bins = 12)
+  
+  
+ggplot(data,aes(x=data$Hr48,fill= ID)) +
+  geom_histogram(bins = 12)
+  
+ggplot(data,aes(x=data$Hr144,fill= ID)) +
+  geom_histogram(bins = 12)
+  
+
+
+
+```
+As a whole, it looks like the longer a Substrate is in the Solution, the more Diluted it becomes. 
+
+What about the different Substrate?
+
+```{r}
+
+ggplot(data,aes(x=data$Hr24,fill= Substrate)) +
+  geom_histogram(bins = 12)
+
+ggplot(data,aes(x=data$Hr48,fill= Substrate)) +
+  geom_histogram(bins = 12)
+
+ggplot(data,aes(x=data$Hr144,fill= Substrate)) +
+  geom_histogram(bins = 12)
+
+
+```
+cool. but it is hard to understand and read.
+
+
+We can run some tests to see if time really does affect dilution.
+
+```{r}
+mod24 <- lm(formula = Dilution ~ Hr24, data = data)
+summary(mod24)
+
+mod48 <- lm(formula = Dilution ~ Hr48, data = data)
+summary(mod48)
+
+mod144 <- lm(formula = Dilution ~ Hr144, data = data)
+summary(mod144)
+```
+
+the only data that is significant is the 144 hour data. The 24 and 48 are not.
+
+What did Sensei Zahn want to know again? Oh yah:
+
++ Which sample locations are functionally different from each other in terms of what C-substrates they can utilize?
+
+Split them all up and look. 
+
+```{r}
+unique(data$ID)
+
+clearwater <- subset(x = data, ID == "Clear_Creek")
+wastewater <- subset(x = data, ID == "Waste_Water")
+soil1 <- subset(x = data, ID == "Soil_1")
+soil2 <- subset(x = data, ID == "Soil_2")
+
+
+ggplot(wastewater,aes(x=Substrate,y= Hr24, fill=Dilution)) +
+  geom_point() 
+
+ggplot(clearwater,aes(x=Substrate,y= Hr24, fill=Dilution)) +
+  geom_point() 
+
+ggplot(soil1,aes(x=Substrate,y= Hr24, fill=Dilution)) +
+  geom_point() 
+
+ggplot(soil2,aes(x=Substrate,y= Hr24, fill=Dilution)) +
+  geom_point() 
+
+
+
+```
+
+
++ Are Soil and Water samples significantly different overall (as in, overall diversity of usable carbon sources)? What about for individual carbon substrates?
+
+```{r, echo=FALSE, include=FALSE}
+
+
+clearwater$differences <- "water"
+
+wastewater$differences <- "water"
+
+soil1$differences <- "soil"
+
+soil2$differences <- "soil"
+
+rbind(clearwater,wastewater,soil1,soil2)
+
+newdata <- rbind(clearwater,wastewater,soil1,soil2)
+
+?plot
+
+
+
+```
+
++ If there are differences between samples, which C-substrates are driving those differences?
+
++ Does the dilution factor change any of these answers?
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
++ Do the control samples indicate any contamination?
+
+Water is the negative control so you will need to see if there is any dilution in the water. If there are none, it means there was no contamination. 
+
+```{r}
+contamination <-data %>%
+  filter(data$Substrate == "Water")
+contamination
+
+```
