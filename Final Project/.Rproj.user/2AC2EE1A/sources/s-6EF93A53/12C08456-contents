@@ -1,0 +1,223 @@
+---
+title: "Data Analysis Of Pogil vs. Lecture Classes"
+output: html_document
+---
+
+```{r setup, include=FALSE,warning=FALSE,message=FALSE,echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+source("Organize_the_Data.R")
+```
+## What is POGIL?
+
+Guided inquiry pedagogies are now a half-century old and can be found at all grade levels, across all disciplines, and over very different class sizes.  These many different inquiry classroom practices all share an antecedent in learner-centered practices, which rewards process skills learners use to construct their own knowledge.  
+
+
+Therefore it is hypothesized that learners in a POGIL (Process-Oriented Guided Inquiry Learning) setting should show substantial gains in teamwork processskills and problem-solving process skills. 
+
+
+## What were the different classes that were a part of this study?
+
+BIO 1010 with Dr. Searle at 9am   
+BIO 1010 with Dr. Davis at 10am    
+BIO 1010 with Dr. Ashworth at 10am    
+BIO 1010 with Dr. Robbins at 11am    
+
+
+CHEM 1210 with Dr. Wilson at 10am  
+CHEM 1210 with Dr. Horn at 1pm  
+
+
+Lets load the packages and look at the painstakingly cleaned data...
+For data cleaning steps see Organize_the_Data.R script
+```{r, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(tidyverse)
+library(dplyr)
+library(readxl)
+library(modelr)
+
+data = readRDS("./cleaned.data.RDS")
+
+```
+
+Each column of data gave details into the Student's information and evaluation of the class. These answers were collected at the end of class through a survery. Here is the information we gathered:
+
+**ID**
+
+Student ID Number.
+
+**PASS**
+
+Whether the student earned an A,B, or C, in the class, or a D, Withdrew, or Failed. Shown by either "True" or "False"
+
+**Pogil**
+
+Whether the student was enrolled in a Pogil class or not shown by either "True" or "False"
+
+**Teacher**
+
+Who the teacher was.
+
+
+## Survey
+
+Students were asked questions using a likert scale survey to describe their experience in the class. 
+(Likert Scales are generally in the form of "Strongly Disagree" to "Strongly Agree" with middle options as well.)
+Each question asked the student to make a self assesment on their learning and on their teacher. These are the questions broken up into categories. As a result of your work in this class: 
+
+Process Skills
+
+1) What gains did you make in Identifying patterns in data
+2) What gains did you make in Recognizing a sound argument and appropriate use of evidence
+3) What gains did you make in Developing a logical argument
+4) What gains did you make in Working effectively with others
+5) What gains did you make in Organizing and explaining your ideas to your peers
+6) What gains did you make in your confidence that you understand the material?
+7) What gains did you make in your confidence that you can solve science questions?
+8) What gains did you make in your confidence that you can understand science issues?**(Not Included in Data)**
+9) What gains did you make in your comfort level in working with complex ideas?
+10) What gains did you make in your willingness to seek help from others when working on academic problems?
+11) What gains did you make in integrating the following: using systematic reasoning in my approach to problems.
+12) What gains did you make in integrating the following: using a critical approach to analyzing data and arguments in my daily life.
+
+Student-Faculty Relationship
+
+13) In general, my professor respects the academic abilities of the students in the class. **(Not Included in Data)**
+14) I see my professor as a role model.
+15) My professor is the kind of professional I would like to emulate, regardless of the career I end up pursuing.
+16) I feel comfortable going to my professor's office hours.
+17) I feel comfortable asking my professor questions in class.
+18) My professor respects me as a person.
+
+Science Identity 
+
+19) It is very important for me to be good at science.
+20) Science is a big part of who I am.
+21) I feel like I belong in the sciences.
+
+Science Confidence
+
+22) I feel I will succeed in this course.
+23) I am confident when I do my homework.
+24) I often feel nervous about doing work in this course. **(Reverse scored. The more they agree, the less confident they are.)**
+
+
+## Anaylysis 
+
+What we are trying to see is if there is significant data to show whether or not being in a POGIL structured class benefits students in gaining process skills, and gives them an advantage in passing their class. All of the answeres in each section will be averaged out so that the tests can be ran by grouping and not by each specific question. 
+
+```{r}
+
+Skills_Mean = apply(data[,c("Q1","Q2","Q3","Q4","Q5","Q6","Q7","Q9","Q10","Q11","Q12")],1,mean)
+data$Skills = Skills_Mean
+
+Relationship_Mean = apply(data[,c("Q14","Q15","Q16","Q17","Q18")],1,mean)
+data$Relationship = Relationship_Mean
+
+Identity_Mean = apply(data[,c("Q19","Q20","Q21")],1,mean)
+data$Identity = Identity_Mean
+
+Confidence_Mean = apply(data[,c("Q22","Q23","Q24")],1,mean)
+data$Confidence = Confidence_Mean
+
+```
+
+We can create some predictions and run generalized linear models to get a better look at what the data is showing. 
+
+```{r} 
+
+modSkills = glm(Pass ~ Skills * Pogil, data=data, family = "binomial")
+modRelationship = glm(Pass ~ Relationship * Pogil, data=data, family= "binomial")
+modConfidence = glm(Pass ~ Confidence * Pogil, data=data, family = "binomial")
+modIdentity = glm(Pass ~ Identity * Pogil, data=data, family= "binomial")
+modAll = glm(Pass ~ (Skills + Relationship + Identity) * Pogil, data=data, family="binomial" )
+
+
+data = add_predictions(data,modSkills,type="response",var = "pred_passfail_skills")
+data = add_predictions(data,modConfidence,type="response",var = "pred_passfail_confidence")
+data = add_predictions(data,modIdentity,type="response",var = "pred_passfail_identity")
+data = add_predictions(data,modRelationship,type="response",var = "pred_passfail_relationship")
+data = add_predictions(data,modAll, type="response",var = "pred_passfail_all")
+
+
+
+```
+
+
+Now that we have our means, predictions and data all together, let's look at the numbers through plots to get a better understanding. For each plot, there will be 2 seperate charts. The chart that is titled "True" means that POGIL was used in class. "False" shows the lecture class predictions. 
+
+Our first diagram will show the probability of a student passing the class based off of their gain of Skills in their class.
+
+```{r echo=FALSE, include=TRUE, warning=FALSE, message=FALSE} 
+
+ggplot(data, aes(x=Skills,y=pred_passfail_skills)) + geom_smooth() +
+  facet_wrap(~Pogil) +
+  labs(x = "Skills Questions Mean", y= "Predicted Rate of Passing Class") 
+
+```
+
+A Kruskal-Wallace test will allow us to see if this is statistically significant. 
+
+```{r, echo=TRUE, eval=FALSE}
+kruskal.test(Pass ~ Skills, data=data)
+```
+Kruskal-Wallis chi-squared = 71.111, df = 44, **p-value = 0.005947**
+
+This shows that students who were in a POGIL class, that did not rate themselves as one having high Skills were almost 25% more likely to pass the class than someone who did not take a POGIL class. It raises the question: 
+
+Does being in a POGIL class allow you to be more likely to succeed? A simple Kruskal-Wallace test can help answer that qustion. 
+
+```{r, echo=TRUE, eval=FALSE}
+kruskal.test(Pass ~ Pogil, data=data)
+```
+Kruskal-Wallis chi-squared = 23.816, df = 1, **p-value = 1.06e-06**
+```{r, echo=FALSE, eval=FALSE}
+tab = table(data$Pogil,data$Pass)
+tab[]/rowSums(tab)
+```
+
+With a p-value of 1.06e-06, and data showing 32% of students in the traditional lecture style class failed, where only 20% of students in Pogil failed, it is safe to say that POGIL classes have a statistically significant impact on student success, and their abilities to gain process skills in the class.
+
+
+
+
+Looking at all 4 cataegories at once, we can see that only the Skills category has a large difference in answers. The Identity, Relationship, and Confidence Categories are very similar. Those three categories' p-values were not significant.
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+p1 = ggplot(data, aes(x=Pogil, y=Skills)) +
+  geom_boxplot() +
+  labs(y= "Skills Average")
+
+p2 = ggplot(data, aes(x=Pogil, y=Identity)) + 
+  geom_boxplot() +
+   labs(y= "Identity Average")
+
+
+p3 = ggplot(data, aes(x=Pogil, y=Relationship)) + 
+  geom_boxplot() +
+   labs(y= "Relationship Average")
+
+p4 =ggplot(data, aes(x=Pogil, y=Confidence)) + 
+  geom_boxplot() +
+   labs(y= "Confidence Average")
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(gridExtra)
+grid.arrange(p1,p2,p3,p4)
+
+```
+
+## Results
+
+These categories yielded no significant data showing a different between Pogil and Lecture classes:
+
+  -Relationship With Professor
+  
+  -Science Identity 
+  
+  -Confidence 
+  
+However, **The Skills category proved true. In a Pogil class setting, students are more likely to gain process skills that can be used in the future outside of the classroom than taking a lecture class.**
+
+Furthermore, they are also more likely to pass the class when in a Pogil classroom. 

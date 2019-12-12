@@ -1,0 +1,225 @@
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(readxl)
+
+# Tidy All of The Data
+
+# Put Together Fall 2017, and Put Together Spring 2017 in Seperate Data sets 
+
+data <- read_excel("../Project/F16 Sp17 SALG grade data.xlsx")
+
+names(data)
+dataa <- read_excel("../Project/F16 Sp17 SALG grade data.xlsx",sheet = 2)
+datab <- read_excel("../Project/F16 Sp17 SALG grade data.xlsx",sheet = 3)
+datac <- read_excel("../Project/F16 Sp17 SALG grade data.xlsx",sheet = 4)
+datad <- read_excel("../Project/F16 Sp17 SALG grade data.xlsx",sheet = 5) 
+
+fall16 <- rbind(dataa,datab,datac,datad)
+
+datae <- read_excel("../Project/F16 Sp17 SALG grade data.xlsx",sheet = 6)
+dataf <- read_excel("../Project/F16 Sp17 SALG grade data.xlsx",sheet = 7)
+
+spring17 <- rbind(datae,dataf)
+
+#Fall 2017 
+
+dat <- read_excel("../Project/F17 SALG grades.xlsx")
+
+dat2a <- read_excel("../Project/F17 SALG grades.xlsx",sheet = 5)
+dat2b<- read_excel("../Project/F17 SALG grades.xlsx",sheet = 6)
+dat2c <- read_excel("../Project/F17 SALG grades.xlsx",sheet = 7)
+dat2d <- read_excel("../Project/F17 SALG grades.xlsx",sheet = 8) 
+dat2e <- read_excel("../Project/F17 SALG grades.xlsx",sheet = 9)
+
+
+names(dat2a)  
+names(dat2b)
+names(dat2c)
+names(dat2d)
+names(dat2e)
+
+dat2 <- rbind(dat2a,dat2b,dat2c,dat2d,dat2e)
+
+cdat <- dat2
+fall17 <- cdat
+
+
+# COMPLETE DATA FOR FALL 2O17  IS CALLED fall17
+
+
+
+#Same for Spring 2018
+
+ash <- read.csv("../Project/Ashworth Sp18 SALG and grades.csv")
+horn <- read.csv("../Project/Horn Sp18 SALG and grades.csv")
+left <- read.csv("../Project/Shurtleff Sp18 SALG and grades.csv")
+
+spring18 <- rbind(ash,horn,left)
+#Take out env.
+# rm(list = c(data2e,dataa,datab,))
+
+#Give each data frame a semseter column so that they can be divided before adding together
+
+
+
+names(fall16)
+names(spring17)
+names(fall17)
+names(spring18)
+
+fall16$semester="fall16"
+spring17$semester="spring17"
+fall17$semester="fall17"
+spring18$semester="spring18"
+
+## RAN INTO PROBLEM WITH THE F16 AND SP17 DATA HAVING Q8 AND Q13 MISSING AND OUT OF ORDER
+## CRIED AND GAVE UP
+
+##Take out Q*/Q8 and Q24_31 and Grade on each data frame
+
+fall16$Grade <- NULL
+spring17$Grade <- NULL
+fall17$Grade <- NULL
+spring18$X <- NULL
+
+fall16$Q24...31 <- NULL
+spring17$Q24...31 <- NULL
+fall17$Q24...31 <- NULL
+spring18$Q24...31 <- NULL
+
+
+
+## MAKE ALL COL. NAMES THE SAME
+# names(data)[3]<-"new_name"
+
+names(spring18)[2] <- "ABC/DWF"
+names(fall17)[4] <- "POGIL/Non"
+names(spring18)[4] <- "POGIL/Non"
+
+names(fall16)[29] <- "Q24"
+names(spring17) [29] <- "Q24"
+
+
+names(fall16)[13] <- "Q8"
+names(spring17)[13] <-"Q8" 
+names(fall17)[13] <- "Q8"
+names(spring17)[13] <- "Q8"
+
+fall16$Q8 <- NULL
+spring17$Q8 <- NULL
+fall17$Q8 <- NULL
+spring18$Q8 <- NULL
+
+
+names(spring18)[3] <- "CHEM/BIO"
+
+  
+## names(my_data)[names(my_data) == "Sepal.Length"] <- "sepal_length"
+names(fall16)[names(fall16) == "Q24...31"] <- "Q24"
+
+
+data <- rbind(fall16,spring17,fall17,spring18)
+
+data$Q13 = NULL
+
+### FINALLY FINALLY FINALLY 
+
+
+#KRUSKAL-WALLIS TESTING
+
+library(ggpubr)
+
+
+
+# chnge all Q columns to numeric
+library(dplyr)
+library(tidyr)
+Qnames = data %>% select(starts_with("Q")) %>% names()
+
+unique(data$Q1)
+data$Q1 = as.numeric(data$Q1)
+data$Q2 = as.numeric(data$Q2)
+data$Q3 = as.numeric(data$Q3)
+data$Q4 = as.numeric(data$Q4)
+data$Q5 = as.numeric(data$Q5)
+data$Q6 = as.numeric(data$Q6)
+data$Q7 = as.numeric(data$Q7)
+# data$Q8 = as.numeric(data$Q8)
+data$Q9 = as.numeric(data$Q9)
+data$Q10 = as.numeric(data$Q10)
+data$Q11 = as.numeric(data$Q11)
+data$Q12 = as.numeric(data$Q12)
+data$Q14 = as.numeric(data$Q14)
+data$Q15 = as.numeric(data$Q15)
+data$Q16 = as.numeric(data$Q16)
+data$Q17 = as.numeric(data$Q17)
+data$Q18 = as.numeric(data$Q18)
+data$Q19 = as.numeric(data$Q19)
+data$Q20 = as.numeric(data$Q20)
+data$Q21 = as.numeric(data$Q21)
+data$Q22 = as.numeric(data$Q22)
+data$Q23 = as.numeric(data$Q23)
+data$Q24 = as.numeric(data$Q24)
+
+Skills_Mean = apply(data[,c("Q1","Q2","Q3","Q4","Q5","Q6","Q7","Q9","Q10","Q11","Q12")],1,mean)
+data$Skills = Skills_Mean
+
+Relationship_Mean = apply(data[,c("Q14","Q15","Q16","Q17","Q18")],1,mean)
+data$Relationship = Relationship_Mean
+
+Identity_Mean = apply(data[,c("Q19","Q20","Q21")],1,mean)
+data$Identity = Identity_Mean
+
+Confidence_Mean = apply(data[,c("Q22","Q23","Q24")],1,mean)
+data$Confidence = Confidence_Mean
+
+
+# Change POGIL NON TO TRUE FALSE 
+
+data$`POGIL/Non`[data$`POGIL/Non` == "POGIL"] <- TRUE
+data$`POGIL/Non`[data$`POGIL/Non` == "Non"] <- FALSE
+data$`POGIL/Non`[data$`POGIL/Non` == "non"] <- FALSE
+
+unique(data$`POGIL/Non`)
+
+# Change ABC/DWF to TRUE FALSE 
+data$`ABC/DWF`[data$`ABC/DWF` == "ABC"] <- TRUE
+data$`ABC/DWF`[data$`ABC/DWF` == "DWF"] <- FALSE
+data$`ABC/DWF`[data$`ABC/DWF` == "DFW"] <- FALSE
+
+
+# Change Pogil and Pass fail 
+names(data)[2] <- "Pass"
+names(data)[4] <- "Pogil"
+names(data)[3] <- "Chem_Bio"
+names(data)[29] <- "Skills"
+names(data)[30] <- "Relationship"
+names(data)[31] <- "Identity"
+names(data)[32] <- "Confidence"
+
+
+#QUESTIONS 1-12 TOGETHER AND INDIVIDUAL 
+
+
+#Long Data for MEANS
+
+
+
+
+
+
+
+#Change Data to be useable 
+data$Pass = as.logical(data$Pass)
+data$Pogil = as.logical(data$Pogil)
+char = as.character(data$Q24)
+char2 = plyr::mapvalues(char, from = c("1","2","3",'4','5','6',"7"), to = c("7","6","5","4","3","2","1"))
+data$Q24 = as.numeric(char2)
+
+
+
+# save dcleaned data
+saveRDS(data,"./cleaned.data.RDS")
+
+
